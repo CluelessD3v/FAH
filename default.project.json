@@ -1,0 +1,11 @@
+{
+  "name": "FAH",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "FAH": {
+        "$path": "src"
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[package]
+name = "cluelessdev/fah"
+description = "A small registry and selective replication helper for Roblox asset templates."
+version = "0.1.0-rc.1"
+license = "MIT"
+authors = ["Clueless_Dev"]
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+exclude = [
+    ".gitignore",
+    "default.project.json",
+]
