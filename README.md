@@ -2,104 +2,27 @@
 
 Fetch Assets Here.
 
-FAH is a small Roblox module for keeping asset templates in one place.
-
-The server keeps the real templates in `ServerStorage`.
-
-The client gets only the templates you choose to replicate.
-
-Then both sides clone prefabs through the same API.
-
-That is the job.
+FAH is a small Roblox module for keeping asset templates in one place. The
+server keeps the real templates in `ServerStorage`, the client gets only the
+templates you choose to replicate, and both sides clone prefabs through the same
+API. That is the job.
 
 ## Why
 
-Assets spread.
+Assets spread. Some end up in `ServerStorage`, some need to be in
+`ReplicatedStorage`, and some sit in `Workspace` because that was convenient at
+the time. Often, people make a whole separate asset place. Then it gets
+abandoned. Then it stops matching the main place. Now you have two problems and
+one of them is named "where is the real sword?"
 
-Some end up in `ServerStorage`. Some need to be in `ReplicatedStorage`. Some sit
-in `Workspace` because that was convenient at the time.
-
-Sometimes people make a whole separate asset place.
-
-Then it gets abandoned.
-
-Then it stops matching the main place.
-
-Now you have two problems and one of them is named "where is the real sword?"
-
-FAH is for not doing that.
-
-Give FAH the template. It stores the canonical copy on the server. Replicate it
-when the client needs it. Clone it by id.
-
-No package ceremony. No second asset universe. Just a registry.
-
-## What It Does
-
-FAH creates two folders.
-
-```text
-ServerStorage
-  __assetRegister__
-
-ReplicatedStorage
-  __AssetPool__
-```
-
-`__assetRegister__` is the server-only registry.
-
-`__AssetPool__` is the replicated prefab pool.
-
-Register an asset and FAH stores it in the registry.
-
-Replicate an asset and FAH clones it into the pool.
-
-Clone an asset and FAH gives you a fresh copy from the right place.
-
-## What It Does Not Do
-
-FAH is not a runtime asset pool for live `PVInstance`s.
-
-It does not recycle spawned models.
-
-It does not unload replicated templates.
-
-It does not validate unlocks, purchases, equipment rules, or trust.
-
-It does not replace Roblox content loading.
-
-It is a simple asset registry that also makes selective replication easy.
-
-## Install
-
-Copy `src` into your project as one ModuleScript named `FAH`.
-
-```text
-ReplicatedStorage
-  FAH
-    connectAssetRequest
-```
-
-Keep `connectAssetRequest` as a server script child.
-
-It requires FAH on the server so the registry and remotes exist before clients
-ask for assets.
-
-Or use the included project file.
-
-With Wally:
-
-```toml
-FAH = "cluelessdev/fah@0.1.0-rc.1"
-```
+FAH is for not doing that. Give FAH the template, let it keep the canonical copy
+on the server, replicate it when the client needs it, and clone it by id. No
+package ceremony. No second asset universe. Just a registry.
 
 ## Basic Usage
 
-Register assets on the server.
-
-How you find them is your business.
-
-Tags are just convenient.
+Register assets on the server. How you find them is your business. Tags are
+just convenient.
 
 ```lua
 local CollectionService = game:GetService("CollectionService")
@@ -113,12 +36,10 @@ for _, asset in CollectionService:GetTagged("FAH") do
 end
 ```
 
-The tag can be `FAH`, `Asset`, `Weapon`, or nothing at all.
-
-FAH only cares that you call `registerAsset`.
+The tag can be `FAH`, `Asset`, `Weapon`, or nothing at all. FAH only cares that
+you call `registerAsset`.
 
 `registerAsset(asset, true)` moves the asset into the server registry.
-
 `replicateAsset(asset)` clones it into the replicated pool.
 
 On the client:
@@ -134,15 +55,13 @@ if sword then
 end
 ```
 
-`clonePrefab` waits for the replicated prefab on the client.
-
-Default wait: 10 seconds.
+`clonePrefab` waits for the replicated prefab on the client. Default wait: 10
+seconds.
 
 ## Replicate On Unlock
 
-You do not have to replicate everything at boot.
-
-Keep the sword server-only until someone unlocks it.
+You do not have to replicate everything at boot. Keep the sword server-only
+until someone unlocks it.
 
 ```lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -157,6 +76,10 @@ local function unlockSword(player: Player)
 end
 ```
 
+That is where the MASSIVE gains live. Not in making one sword cheaper. In not
+replicating the 400 swords, hats, particles, pets, skins, props, and seasonal
+objects the player cannot currently use.
+
 On the client, clone it after the unlock message arrives.
 
 ```lua
@@ -166,13 +89,9 @@ if sword then
 end
 ```
 
-This makes the template available from `ReplicatedStorage.__AssetPool__`.
-
-It does not grant the item.
-
-It does not make the server trust the client.
-
-That part is still your game.
+This makes the template available from `ReplicatedStorage.__AssetPool__`. It
+does not grant the item, make the server trust the client, or handle your
+equipment rules. That part is still your game.
 
 ## Asset Ids
 
@@ -189,26 +108,20 @@ You can also read ids from attributes.
 FAH.assetIds = { "AssetId", "ItemId" }
 ```
 
-FAH checks those attributes in order.
-
-If none are found, it uses `instance.Name`.
+FAH checks those attributes in order. If none are found, it uses
+`instance.Name`.
 
 ## Querying Metadata
 
-FAH can query the server registry without replicating the full assets.
-
-It uses Roblox's
+FAH can query the server registry without replicating the full assets. It uses
+Roblox's
 [`Instance:QueryDescendants`](https://create.roblox.com/docs/reference/engine/classes/Instance#QueryDescendants)
-under the hood.
+under the hood, so the selector is the Roblox query selector. Not a FAH
+mini-language.
 
-That means the selector is the Roblox query selector.
-
-Not a FAH mini-language.
-
-Roblox made this fast.
-
-For registry lookups, use it instead of doing your own descendant walk and
-`FindFirstChild` chain.
+QueryDescendants is bewilderingly fast. Silly fast. "Why is this faster than
+the thing I was going to write by hand" fast. For registry lookups, use it
+instead of doing your own descendant walk and `FindFirstChild` chain.
 
 ```lua
 local result = FAH.query(
@@ -237,9 +150,37 @@ The result is a plain table.
 }
 ```
 
-Only the requested properties, attributes, and tag checks are returned.
+Only the requested properties, attributes, and tag checks are returned. The
+asset stays on the server.
 
-The asset stays on the server.
+## What It Does Not Do
+
+FAH is not a runtime asset pool for live `PVInstance`s. It does not recycle
+spawned models, unload replicated templates, validate unlocks, validate
+purchases, or replace Roblox content loading.
+
+It is a simple asset registry that also makes selective replication easy.
+
+## Install
+
+Copy `src` into your project as one ModuleScript named `FAH`.
+
+```text
+ReplicatedStorage
+  FAH
+    connectAssetRequest
+```
+
+Keep `connectAssetRequest` as a server script child. It requires FAH on the
+server so the registry and remotes exist before clients ask for assets.
+
+Or use the included project file.
+
+With Wally:
+
+```toml
+FAH = "cluelessdev/fah@0.1.0-rc.1"
+```
 
 ## API
 
@@ -281,9 +222,7 @@ On the client, FAH waits for the replicated prefab. The default timeout is 10
 seconds. Pass `0` to skip waiting.
 
 With `sourceFromRegistry = true`, the server reads directly from
-`ServerStorage.__assetRegister__`.
-
-Clients cannot use that path.
+`ServerStorage.__assetRegister__`. Clients cannot use that path.
 
 Do not mutate the returned prefab unless you mean to affect future clones.
 
@@ -309,6 +248,25 @@ The selector is passed to Roblox `QueryDescendants` against the registry.
 
 Client calls use FAH's remote function and receive the same table shape as
 server calls.
+
+## How It Does It
+
+FAH creates two folders.
+
+```text
+ServerStorage
+  __assetRegister__
+
+ReplicatedStorage
+  __AssetPool__
+```
+
+`__assetRegister__` is the server-only registry. `__AssetPool__` is the
+replicated prefab pool. Register an asset and FAH stores it in the registry.
+Replicate an asset and FAH clones it into the pool. Clone an asset and FAH gives
+you a fresh copy from the right place.
+
+That is the machinery. You usually do not need to care about it.
 
 ## When To Use FAH
 
